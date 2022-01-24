@@ -1,0 +1,149 @@
+/**********************
+ *                    *
+ *   セグ木テンプレ   *
+ *                    *
+ **********************/
+ //1072 - セグメントツリー技術基礎
+ //参考 - ei2009
+#include<bits/stdc++.h>
+#define dou double
+#define ll long long
+#define int2 int,int
+#define all(x) x.begin(),x.end()
+#define gi greater<int>()
+#define pb push_back
+#define mp make_pair
+#define rep(i,n) for(int i=0;i<(int)(n);i++)
+#define fir first
+#define sec second
+#define uns unsigned
+using namespace std;
+struct seg{
+    int n,inf=30000,m_inf=-30000;
+    vector<ll> v_sum; //区間和
+    vector<ll> v_min; //最小値
+    vector<ll> v_max; //最大値
+
+    //配列初期化
+    seg(int size){
+        n=1;
+        while(n<size){
+            n*=2;
+        }
+        v_sum.resize(n*2);
+        v_min.resize(n*2);
+        v_max.resize(n*2);
+        for(int i=0;i<n*2;i++){
+            v_sum[i]=0;
+            v_min[i]=0;
+            v_max[i]=0;
+        }
+    }
+
+    //値の更新
+    void update(int i,int x){
+        i+=n-1;
+        v_sum[i]=x;
+        v_min[i]=x;
+        v_max[i]=x;
+        while(i>0){
+            i=(i-1)/2;
+            v_sum[i]=v_sum[i*2+1]+v_sum[i*2+2];
+            v_min[i]=min(v_min[i*2+1],v_min[i*2+2]);
+            v_max[i]=max(v_max[i*2+1],v_max[i*2+2]);
+        }
+    }
+
+    //値の加算
+    void add(int i,int x){
+        i+=n-1;
+        v_sum[i]+=x;
+        v_min[i]+=x;
+        v_max[i]+=x;
+        while(i>0){
+            i=(i-1)/2;
+            v_sum[i]=v_sum[i*2+1]+v_sum[i*2+2];
+            v_min[i]=min(v_min[i*2+1],v_min[i*2+2]);
+            v_max[i]=max(v_max[i*2+1],v_max[i*2+2]);
+        }
+    }
+
+    //最小値の取得
+    int getMin(int a,int b){
+        return getlit(a,b,0,0,n);
+    }
+    int getlit(int a,int b,int i,int l,int r){
+        if(r<=a||b<=l){ //完全に範囲外
+            return inf;
+        }else if(a<=l&&r<=b){ //完全に範囲内
+            return v_min[i];
+        }else{ //一部区間が被る
+            int min_l=getlit(a,b,i*2+1,l,(l+r)/2);
+            int min_r=getlit(a,b,i*2+2,(l+r)/2,r);
+            return min(min_l,min_r);
+        }
+    }
+
+    //最大値の取得
+    int getMax(int a,int b){
+        return getbig(a,b,0,0,n);
+    }
+    int getbig(int a,int b,int i,int l,int r){
+        if(r<=a||b<=l){
+            return m_inf;
+        }else if(a<=l&&r<=b){
+            return v_max[i];
+        }else{
+            int max_l=getbig(a,b,i*2+1,l,(l+r)/2);
+            int max_r=getbig(a,b,i*2+2,(l+r)/2,r);
+            return max(max_l,max_r);
+        }
+    }
+
+    //合計値(区間和)の取得
+    int getSum(int a,int b){
+        return gettot(a,b,0,0,n);
+    }
+    int gettot(int a,int b,int i,int l,int r){
+        if(r<=a||b<=l){
+            return 0;
+        }else if(a<=l&&r<=b){
+            return v_sum[i];
+        }else{
+            int sum_l=gettot(a,b,i*2+1,l,(l+r)/2);
+            int sum_r=gettot(a,b,i*2+2,(l+r)/2,r);
+            return sum_l+sum_r;
+        }
+    }
+
+    //出力用コード(最大値)
+    void out(int size){
+        for(int i=n-1;i<size+n;i++){
+            cout<<v_max[i]<<" ";
+        }
+        cout<<"\n";
+    }
+};
+
+int main(){
+    int n,m,a,b;
+    cin>>n>>m;
+    seg st(n);
+    string query;
+    for(int i=0;i<m;i++){
+        cin>>query>>a>>b;
+        if(query=="update") st.update(a,b);
+        else if(query=="add") st.add(a,b);
+        else if(query=="getMin") cout<<st.getMin(a,b)<<"\n";
+        else if(query=="getMax") cout<<st.getMax(a,b)<<"\n";
+        else if(query=="getSum") cout<<st.getSum(a,b)<<"\n";
+    }
+    //st.out(n);
+    return 0; 
+}
+
+/*使うメリット
+    値が更新される時の最小値や累積和の取得。
+    通常累積和を求める時はO(N)かかるが、
+    セグ木を使うと0(log N)で行うことができる。
+*/
