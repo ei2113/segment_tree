@@ -1,0 +1,124 @@
+/******************
+ *                *
+ *   遅延セグ木     *
+ *                *
+ ******************/
+ //参考 - 遅延評価セグメント木をソラで書きたいあなたに - hogecoder
+ //https://tsutaj.hatenablog.com/entry/2017/03/30/224339
+#include<bits/stdc++.h>
+#define dou double
+#define ll long long
+#define int2 int,int
+#define all(x) x.begin(),x.end()
+#define gi greater<int>()
+#define pb push_back
+#define mp make_pair
+#define rep(i,n) for(int i=0;i<(int)(n);i++)
+#define fir first
+#define sec second
+#define uns unsigned
+using namespace std;
+struct seg{
+    int n,inf=30000,m_inf=-30000;
+    vector<ll> node,lazy;
+    vector<bool> flag;
+    //node -> 通常
+    //lazy -> 遅延評価
+
+    //配列初期化
+    seg(int size){
+        n=1;
+        while(n<size){
+            n*=2;
+        }
+        node.resize(2*n);
+        lazy.resize(2*n,inf);
+        flag.resize(2*n,false);
+        for(int i=0;i<n*2;i++){
+            node[i]=0;
+        }
+    }
+
+    //遅延評価
+    void eval(int i,int l,int r){
+        if(flag[i]){
+            //自ノードの値を通常配列に伝播
+            node[i]+=lazy[i];
+
+            //遅延配列の子ノードに自身の値を伝播
+            //伝播する時は半分に
+            if(r-l>1){
+                lazy[i*2+1]+=lazy[i]/2;
+                lazy[i*2+2]+=lazy[i]/2;
+            }
+
+            //伝播終了後、自ノードの遅延配列を空に
+            flag[i]=false;
+        }
+    }
+
+    //区間での値更新
+    void update(int a,int b,int x,int i=0,int l=0,int r=-1){
+        if(r<0) r=n;
+        lazy(i,l,r);
+        if(b<=l||r<=a) return;
+        if(a<=l&&r<=b) {
+            lazy[i]+=x;
+            flag[i]=true;
+            eval(k,l,r);
+        } else {
+            update(a,b,x,2*i+1,l,(l+r)/2);
+            update(a,b,x,2*i+2,(l+r)/2,r);
+            node[i]=node[2*i+1]+node[2*i+2];
+        }
+    }
+
+    //区間での値加算
+    void add(int a,int b,ll x,int i=0,int l=0,int r=-1){
+        if(r<0) r=n;
+
+        //i番目のノードに対して遅延評価をする
+        eval(i,l,r);
+
+        //完全に範囲外
+        if(b<=l||r<=a) return;
+
+        //完全に範囲内
+        if(a<=l&&r<=b) {
+            lazy[i]+=(r-l)*x;
+            eval(k,l,r);
+        }
+
+        //そうでないなら通常セグ木と同じ
+        else {
+            add(a,b,x,2*i+1,l,(l+r)/2);
+            add(a,b,x,2*i+2,(l+r)/2,r);
+            node[i]=node[2*i+1]+node[2*i+2];
+        }
+    }
+
+    //区間和の取得
+    ll getSum(int a,int b,int i=0,int l=0,int r=-1){
+        if(r<0) r=n;
+        if(b<=l||r<=a) return 0;
+
+        //関数が呼び出されたら評価
+        eval(i,l,r);
+        if(a<=l&&r<=b) return node[i];
+        ll vl=getSum(a,b,2*i+1,l,(l+r)/2);
+        ll vr=getsum(a,b,2*i+2,(l+r)/2,r);
+        return vl+vr;
+    }
+};
+
+int main(){
+    
+    return 0; 
+}
+
+/*使うメリット
+    区間単位での値の更新がある時、
+    範囲の長さをLとすると、
+    通常セグ木で区間更新をするとO(L log N)だが、
+    遅延セグ木でやるとO(log N)で出来る。
+*/
